@@ -1,0 +1,45 @@
+name: Publish to Server
+run-name: ${{ gitea.actor }} is publishing your site using Gitea Actions 🚀
+
+on:
+  workflow_dispatch:
+  # Trigger the workflow on push
+  push:
+    branches: [main]
+
+# Authenticate to the the server via ssh
+# and run our deployment script (sftp upload)
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: SFTP Upload - Main Site
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          uploads: |
+            ${{ vars.GIT_FOLDER_MAIN }} => ${{ vars.SSH_FOLDER_BETA }}
+          delete: 'true'
+          ignore: |
+            *.git
+            */**/*git*
+      - name: SFTP Upload - Archive Site
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          uploads: |
+            ${{ vars.GIT_FOLDER_ARCHIVE }} => ${{ vars.SSH_FOLDER_ARCHIVE }}
+          delete: 'true'
+          ignore: |
+            *.git
+            */**/*git*
